@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MY 人事申請 Agent</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: 'Meiryo', 'Hiragino Kaku Gothic Pro', sans-serif;
+      background: #f0f5f5;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 13px
+    }
+
+    /* Header */
+    #header {
+      background: #0d4f4e;
+      color: white;
+      padding: 6px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .my-badge {
+      background: #1a9090;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 11px;
+      flex-shrink: 0
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 600
+    }
+
+    .proto-badge {
+      background: #e8a020;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px
+    }
+
+    /* Progress */
+    #progress-bar {
+      background: white;
+      padding: 7px 20px;
+      border-bottom: 1px solid #e0e8e8;
+      flex-shrink: 0;
+      min-height: 0
+    }
+
+    .prog-items {
+      display: flex;
+      align-items: center;
+      width: 100%
+    }
+
+    .prog-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px
+    }
+
+    .prog-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700
+    }
+
+    .prog-label {
+      font-size: 10px;
+      white-space: nowrap
+    }
+
+    .prog-line {
+      flex: 1;
+      height: 2px;
+      margin-top: 11px;
+      margin-bottom: auto
+    }
+
+    .prog-done .prog-circle,
+    .prog-current .prog-circle {
+      background: #0d6b69;
+      color: white;
+      border-color: #0d6b69
+    }
+
+    .prog-current .prog-circle {
+      box-shadow: 0 0 0 3px rgba(13, 107, 105, .2)
+    }
+
+    .prog-done .prog-label,
+    .prog-current .prog-label {
+      color: #0d6b69;
+      font-weight: 700
+    }
+
+    .prog-future .prog-circle {
+      background: white;
+      color: #bbb;
+      border-color: #ddd
+    }
+
+    .prog-future .prog-label {
+      color: #bbb
+    }
+
+    .prog-line-done {
+      background: #0d6b69
+    }
+
+    .prog-line-future {
+      background: #ddd
+    }
+
+    /* Main */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      gap: 10px;
+      padding: 8px 14px
+    }
+
+    /* Mode panel */
+    #mode-panel {
+      width: 170px;
+      flex-shrink: 0;
+      overflow-y: auto
+    }
+
+    .panel-box {
+      background: white;
+      border: 1px solid #e0e8e8;
+      border-radius: 8px;
+      padding: 12px
+    }
+
+    .panel-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 10px;
+      color: #333
+    }
+
+    .mode-btn {
+      width: 100%;
+      border: 1.5px solid #0d6b69;
+      color: #0d6b69;
+      background: white;
+      border-radius: 20px;
+      padding: 7px 8px;
+      font-size: 11.5px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      font-weight: 500;
+      transition: all .15s;
+      text-align: center;
+      line-height: 1.3
+    }
+
+    .mode-btn:hover {
+      background: #e0f4f2
+    }
+
+    .mode-btn.active {
+      background: #0d6b69;
+      color: white
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e0e8e8;
+      margin: 8px 0
+    }
+
+    /* Chat */
+    #chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0
+    }
+
+    #form-area {
+      flex-shrink: 0;
+      max-height: 58vh;
+      overflow-y: auto;
+      padding: 4px 0
+    }
+
+    #faq-input-area {
+      flex-shrink: 0;
+      padding: 6px 0;
+      display: none
+    }
+
+    #faq-input {
+      width: 100%;
+      border: 1px solid #b0d4d3;
+      border-radius: 20px;
+      padding: 9px 16px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit
+    }
+
+    #faq-input:focus {
+      border-color: #0d6b69
+    }
+
+    /* Messages */
+    .msg {
+      display: flex;
+      gap: 8px;
+      margin: 3px 0;
+      padding: 8px 10px;
+      border-radius: 10px;
+      line-height: 1.65
+    }
+
+    .msg-bot {
+      background: #dff0ef
+    }
+
+    .msg-user {
+      background: #ffffff;
+      border: 1px solid #ebebeb;
+      flex-direction: row-reverse
+    }
+
+    .msg-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px
+    }
+
+    .avatar-bot {
+      background: #0d6b69;
+      color: white
+    }
+
+    .avatar-user {
+      background: #888;
+      color: white
+    }
+
+    .msg-content {
+      flex: 1;
+      word-break: break-word
+    }
+
+    .msg-user .msg-content {
+      text-align: right
+    }
+
+    /* Forms */
+    .form-box {
+      background: white;
+      border: 1px solid #e0e8e8;
+      border-radius: 8px;
+      padding: 14px
+    }
+
+    .form-group {
+      margin-bottom: 10px
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 3px;
+      display: block
+    }
+
+    .form-input {
+      width: 100%;
+      border: 1px solid #b0d4d3;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit
+    }
+
+    .form-input:focus {
+      border-color: #0d6b69
+    }
+
+    .form-select {
+      width: 100%;
+      border: 1px solid #b0d4d3;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+      background: white;
+      font-family: inherit
+    }
+
+    .form-textarea {
+      width: 100%;
+      border: 1px solid #b0d4d3;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+      resize: vertical
+    }
+
+    .btn-primary {
+      background: #0d6b69;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 7px 18px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background .15s
+    }
+
+    .btn-primary:hover {
+      background: #0a5553
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #0d6b69;
+      border: 1.5px solid #0d6b69;
+      border-radius: 20px;
+      padding: 7px 18px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all .15s
+    }
+
+    .btn-secondary:hover {
+      background: #e0f4f2
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px
+    }
+
+    .col2 {
+      display: flex;
+      gap: 10px
+    }
+
+    .col2>* {
+      flex: 1
+    }
+
+    .section-label {
+      font-weight: 700;
+      font-size: 13px;
+      margin: 8px 0 5px
+    }
+
+    .expander {
+      border: 1px solid #e0e8e8;
+      border-radius: 6px;
+      margin-bottom: 8px
+    }
+
+    .expander-header {
+      padding: 7px 12px;
+      font-weight: 600;
+      font-size: 13px;
+      background: #f8fafa;
+      border-radius: 6px;
+      cursor: default
+    }
+
+    .expander-body {
+      padding: 10px 12px
+    }
+
+    .file-upload-area {
+      border: 2px dashed #b0d4d3;
+      border-radius: 8px;
+      padding: 18px;
+      text-align: center;
+      color: #666;
+      cursor: pointer;
+      transition: all .15s
+    }
+
+    .file-upload-area:hover {
+      border-color: #0d6b69;
+      background: #f0fafa
+    }
+
+    .file-upload-area.dragover {
+      border-color: #0d6b69;
+      background: #e6f7f6
+    }
+
+    .file-name {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #0d6b69;
+      font-weight: 600
+    }
+
+    .file-meta-row {
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .file-clear-btn {
+      border: 1px solid #c9dddd;
+      background: #fff;
+      color: #0d6b69;
+      border-radius: 14px;
+      font-size: 10px;
+      padding: 2px 8px;
+      cursor: pointer
+    }
+
+    .file-clear-btn:hover {
+      background: #eaf6f5
+    }
+
+    .pdf-inline-thumb {
+      width: 130px;
+      height: 90px;
+      border: 1px solid #d6e4e3;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+      margin: 6px auto 4px;
+      cursor: pointer;
+      display: block
+    }
+
+    .pdf-inline-thumb embed {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none
+    }
+
+    .img-inline-thumb {
+      width: 130px;
+      height: 90px;
+      border: 1px solid #d6e4e3;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+      margin: 6px auto 4px;
+      cursor: zoom-in;
+      display: block
+    }
+
+    .img-inline-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block
+    }
+
+    .pdf-chat-thumb {
+      width: 220px;
+      border: 1px solid #d6e4e3;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      margin-top: 6px;
+      cursor: pointer
+    }
+
+    .pdf-chat-thumb embed {
+      width: 100%;
+      height: 150px;
+      border: none;
+      display: block;
+      pointer-events: none
+    }
+
+    .pdf-chat-caption {
+      font-size: 11px;
+      color: #0d6b69;
+      padding: 6px 8px;
+      border-top: 1px solid #eef3f3
+    }
+
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: #856404;
+      margin-top: 8px
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 8px 0
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer
+    }
+
+    .radio-option input {
+      accent-color: #0d6b69;
+      width: 14px;
+      height: 14px
+    }
+
+    .sample-btn {
+      width: 100%;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+      margin-bottom: 4px;
+      color: #d00;
+      transition: background .15s;
+      font-family: inherit
+    }
+
+    .sample-btn:hover {
+      background: #fff0f0
+    }
+
+    .confirm-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 5px 0;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 8px
+    }
+
+    .confirm-key {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      width: 130px;
+      flex-shrink: 0
+    }
+
+    .confirm-val {
+      font-size: 12px;
+      color: #333;
+      flex: 1;
+      word-break: break-all
+    }
+
+    .gift-card {
+      border: 1px solid #e0e8e8;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+      font-size: 12px
+    }
+
+    .orange {
+      color: #e8a020;
+      font-weight: 600
+    }
+
+    /* Info panel */
+    #info-panel {
+      width: 170px;
+      flex-shrink: 0;
+      overflow-y: auto
+    }
+
+    .info-row {
+      margin-bottom: 9px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid #f0f0f0
+    }
+
+    .info-key {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 1px
+    }
+
+    .info-val {
+      font-size: 12px;
+      font-weight: 700;
+      color: #333
+    }
+
+    /* Spinner */
+    #spinner-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, .7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    #spinner-overlay.active {
+      display: flex
+    }
+
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border: 4px solid #e0e8e8;
+      border-top-color: #0d6b69;
+      border-radius: 50%;
+      animation: spin .8s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .spinner-text {
+      font-size: 14px;
+      color: #333
+    }
+    #img-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.82);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out
+    }
+    #img-modal.open { display: flex }
+    #img-modal img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 8px;
+      object-fit: contain;
+      box-shadow: 0 8px 40px rgba(0,0,0,.6)
+    }
+    #img-modal-close {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      color: #fff;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      opacity: .8
+    }
+    #img-modal-close:hover { opacity: 1 }
+
+    #pdf-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .82);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center
+    }
+
+    #pdf-modal.open {
+      display: flex
+    }
+
+    #pdf-modal-frame {
+      width: 92vw;
+      height: 92vh;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, .6)
+    }
+
+    #pdf-modal-close {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      color: #fff;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      opacity: .8
+    }
+
+    #pdf-modal-close:hover {
+      opacity: 1
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="header">
+    <div class="header-left">
+      <div class="my-badge">MY</div>
+      <span class="header-title">MY 人事申請 Agent</span>
+    </div>
+    <div class="proto-badge">PROTOTYPE</div>
+  </div>
+
+  <div id="progress-bar"></div>
+
+  <div id="main">
+    <div id="mode-panel">
+      <div class="panel-box">
+        <div class="panel-title">モード選択</div>
+        <button class="mode-btn" onclick="switchMode('tanshin_start')">開始</button>
+        <button class="mode-btn" onclick="switchMode('roundtrip')">往復</button>
+        <button class="mode-btn" onclick="switchMode('change')">変更</button>
+        <button class="mode-btn" onclick="switchMode('stop')">停止</button>
+        <!-- <button class="mode-btn" onclick="switchMode('expense')">経費申請</button> -->
+        <!-- <button class="mode-btn" onclick="switchMode('faq')">FAQデモ</button> -->
+        <hr class="divider">
+        <button class="mode-btn" onclick="resetMode()">会話をリセット</button>
+      </div>
+    </div>
+
+    <div id="chat-area">
+      <div id="messages"></div>
+      <div id="form-area"></div>
+      <div id="faq-input-area">
+        <input id="faq-input" type="text" placeholder="例：有給の申請ってどうやるの？" onkeydown="if(event.key==='Enter')faqSubmit()">
+      </div>
+    </div>
+
+    <div id="info-panel">
+      <div class="panel-box" id="info-box" style="display:none">
+        <div class="panel-title">ⓘ 入力済み情報</div>
+        <div id="info-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="spinner-overlay">
+    <div class="spinner"></div>
+    <div class="spinner-text" id="spinner-text">処理中…</div>
+  </div>
+
+  <script>
+    // ─── State ────────────────────────────────────────────────────────────────────
+    const S = {
+      mode: 'tanshin_start', messages: [],
+      // tanshin_start
+      step: -1, step_prompted: false,
+      start_month: '', start_date_str: '', reason: '重度傷病治療',
+      care_person: '', dest_station: 'ふじみ野', family_station: '通町筋',
+      round_trip_amount: '98296', annual_amount: '', transport: 'バス・航空機・鉄道', distance: '1157.1km', allowance: '',
+      confirmed: [],
+      // roundtrip
+  rt_step: 0, rt_prompted: false, rt_fields: {}, rt_variant: 'move',
+      // roundtrip+stay
+      rms_step: 0, rms_prompted: false, rms_fields: {},
+      // expense
+      exp_step: -2, exp_prompted: false,
+      exp_base_code: '', exp_expense_category: '生保',
+      exp_extracted: {}, exp_description: '',
+      exp_choice1: '', exp_large: '社外贈答（≠後援者会・セミナー等）',
+      exp_medium: '手土産・差入れ', exp_small: '税抜単価１，０００円超（１名または１企業あたり）',
+      exp_receipt_status: '', exp_public_official: '', exp_app_type: '',
+      exp_gift_recipients: [],
+    };
+
+    const REASONS = ['重度傷病治療', '養育・教育', '介護・看護', 'その他'];
+    const CAREGIVERS = ['申請者', '扶養家族等'];
+  const MODES_ORDER = ['tanshin_start', 'roundtrip', 'roundtrip_stay', 'expense', 'faq'];
+    const STAGES = ['情報入力', '証憑提出', 'ルート確認', '内容確認', '確認・申請'];
+
+    // ─── Utilities ────────────────────────────────────────────────────────────────
+    function gv(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+
+    function todayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+    function nextMonthJp() {
+      const d = new Date(); let m = d.getMonth() + 2, y = d.getFullYear();
+      if (m > 12) { m = 1; y++; }
+      return `${y}年${m}月`;
+    }
+    function remainToMarch(m) {
+      const n = ((m - 1) % 12) + 1;
+      return ((3 - n) % 12 + 12) % 12 + 1;
+    }
+
+    function md(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/:orange\[(.+?)\]/g, '<span class="orange">$1</span>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#0d6b69">$1</a>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function addBot(text) { S.messages.push({ r: 'bot', c: text }); renderMsgs(); scrollBot(); }
+    function addUser(text) { S.messages.push({ r: 'user', c: text }); renderMsgs(); scrollBot(); }
+
+    function renderMsgs() {
+      document.getElementById('messages').innerHTML = S.messages.map(m => {
+        const cls = m.r === 'bot' ? 'msg-bot' : 'msg-user';
+        const av = m.r === 'bot'
+          ? '<div class="msg-avatar avatar-bot">AI</div>'
+          : '<div class="msg-avatar avatar-user">人</div>';
+        const body = m.html ? m.c : md(m.c);
+        return `<div class="msg ${cls}">${av}<div class="msg-content">${body}</div></div>`;
+      }).join('');
+    }
+    function scrollBot() {
+      const el = document.getElementById('messages');
+      setTimeout(() => { el.scrollTop = el.scrollHeight; }, 40);
+    }
+    function setForm(html) { document.getElementById('form-area').innerHTML = html; }
+    function clearForm() { document.getElementById('form-area').innerHTML = ''; }
+
+    function spinner(text, ms, cb) {
+      document.getElementById('spinner-text').textContent = text;
+      document.getElementById('spinner-overlay').classList.add('active');
+      setTimeout(() => { document.getElementById('spinner-overlay').classList.remove('active'); cb(); }, ms);
+    }
+
+    function showWarn(msg) {
+      const fa = document.getElementById('form-area');
+      let w = fa.querySelector('.warning'); if (w) w.remove();
+      const d = document.createElement('div'); d.className = 'warning'; d.textContent = msg;
+      fa.appendChild(d); setTimeout(() => d.remove(), 3000);
+    }
+
+    function escHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function isPdfFile(file) {
+      if (!file) return false;
+      return file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    }
+
+    function isImageFile(file) {
+      if (!file) return false;
+      return file.type.startsWith('image/') || /\.(png|jpe?g)$/i.test(file.name || '');
+    }
+
+    function clearPreviewUrl(dispEl) {
+      if (!dispEl || !dispEl.dataset.previewUrl) return;
+      URL.revokeObjectURL(dispEl.dataset.previewUrl);
+      delete dispEl.dataset.previewUrl;
+    }
+
+    function clearSelectedFile(inp, disp) {
+      const input = document.getElementById(inp);
+      const n = document.getElementById(disp);
+      if (input) input.value = '';
+      if (n) {
+        clearPreviewUrl(n);
+        n.innerHTML = '';
+      }
+    }
+
+    function isAcceptableUpload(file) {
+      if (!file) return false;
+      return isPdfFile(file) || isImageFile(file);
+    }
+
+    function handleDrop(ev, inp, disp) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      ev.currentTarget.classList.remove('dragover');
+      const file = ev.dataTransfer?.files?.[0];
+      if (!file) return;
+      if (!isAcceptableUpload(file)) {
+        showWarn('アップロードできるのは PDF / PNG / JPG / JPEG のみです。');
+        return;
+      }
+      const input = document.getElementById(inp);
+      if (!input) return;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      showFileName(inp, disp);
+    }
+
+    function showFileName(inp, disp) {
+      const f = document.getElementById(inp).files[0];
+      const n = document.getElementById(disp);
+      if (!n) return;
+      clearPreviewUrl(n);
+      if (!f) { n.innerHTML = ''; return; }
+
+      if (isPdfFile(f)) {
+        const pdfUrl = URL.createObjectURL(f);
+        n.dataset.previewUrl = pdfUrl;
+        n.innerHTML = `<div class="pdf-inline-thumb" onclick="event.stopPropagation();openPdfModal('${pdfUrl}')" title="クリックしてPDFを表示">
+            <embed src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1" type="application/pdf">
+          </div>
+          <div class="file-meta-row"><span>📎 ${escHtml(f.name)}</span><button type="button" class="file-clear-btn" onclick="event.stopPropagation();clearSelectedFile('${inp}','${disp}')">削除</button></div>`;
+      } else if (isImageFile(f)) {
+        const imgUrl = URL.createObjectURL(f);
+        n.dataset.previewUrl = imgUrl;
+        n.innerHTML = `<div class="img-inline-thumb" onclick="event.stopPropagation();openImgModal('${imgUrl}')" title="クリックして画像を表示">
+            <img src="${imgUrl}" alt="${escHtml(f.name)}">
+          </div>
+          <div class="file-meta-row"><span>📎 ${escHtml(f.name)}</span><button type="button" class="file-clear-btn" onclick="event.stopPropagation();clearSelectedFile('${inp}','${disp}')">削除</button></div>`;
+      } else {
+        n.innerHTML = `<div class="file-meta-row"><span>📎 ${escHtml(f.name)}</span><button type="button" class="file-clear-btn" onclick="event.stopPropagation();clearSelectedFile('${inp}','${disp}')">削除</button></div>`;
+      }
+    }
+
+    function addFileMessage(file, msg, cb) {
+      const isImg = isImageFile(file);
+      if (isImg) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const html = `${msg}<br><img src="${e.target.result}" style="max-width:220px;max-height:180px;border-radius:6px;margin-top:6px;display:block;cursor:zoom-in;" onclick="openImgModal(this.src)">`;
+          S.messages.push({ r: 'user', c: html, html: true });
+          renderMsgs(); scrollBot();
+          cb();
+        };
+        reader.readAsDataURL(file);
+      } else if (isPdfFile(file)) {
+        const pdfUrl = URL.createObjectURL(file);
+        const html = `${msg}<br><div class="pdf-chat-thumb" onclick="openPdfModal('${pdfUrl}')" title="クリックしてPDFを表示">
+            <embed src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1" type="application/pdf">
+            <div class="pdf-chat-caption">📄 ${escHtml(file.name)}</div>
+          </div>`;
+        S.messages.push({ r: 'user', c: html, html: true });
+        renderMsgs(); scrollBot();
+        cb();
+      } else {
+        addUser(msg + '\n\n[' + file.name + ']');
+        cb();
+      }
+    }
+
+    function fileInput(inputId, dispId, label) {
+      return `<div class="form-group"><label class="form-label">${label}</label>
+    <div class="file-upload-area" onclick="document.getElementById('${inputId}').click()"
+         ondragover="event.preventDefault();this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleDrop(event,'${inputId}','${dispId}')">
+      クリック または ドラッグ&ドロップでファイルを選択
+      <div class="file-name" id="${dispId}"></div>
+    </div>
+    <input type="file" id="${inputId}" accept=".pdf,.png,.jpg,.jpeg" style="display:none"
+           onchange="showFileName('${inputId}','${dispId}')">
+  </div>`;
+    }
+
+    // ─── Mode switching ───────────────────────────────────────────────────────────
+    function switchMode(mode) {
+      resetFor(mode);
+      document.querySelectorAll('.mode-btn').forEach(b => {
+        const oc = b.getAttribute('onclick') || '';
+        const m = oc.match(/switchMode\('([^']+)'\)/);
+        b.classList.toggle('active', !!m && m[1] === mode);
+      });
+      renderMode();
+    }
+    function resetMode() { switchMode(S.mode); }
+
+    function resetFor(mode) {
+      Object.assign(S, {
+        mode, messages: [],
+        step: -1, step_prompted: false,
+        start_month: '', start_date_str: '', reason: '重度傷病治療',
+        care_person: '', dest_station: 'ふじみ野', family_station: '通町筋',
+        round_trip_amount: '98296', annual_amount: '', transport: 'バス・航空機・鉄道', distance: '1157.1km', allowance: '',
+        confirmed: [],
+  rt_step: 0, rt_prompted: false, rt_fields: {}, rt_variant: 'move',
+        rms_step: 0, rms_prompted: false, rms_fields: {},
+        exp_step: -2, exp_prompted: false,
+        exp_base_code: '', exp_expense_category: '生保',
+        exp_extracted: {}, exp_description: '',
+        exp_choice1: '', exp_large: '社外贈答（≠後援者会・セミナー等）',
+        exp_medium: '手土産・差入れ', exp_small: '税抜単価１，０００円超（１名または１企業あたり）',
+        exp_receipt_status: '', exp_public_official: '', exp_app_type: '',
+        exp_gift_recipients: [],
+      });
+    }
+
+    function renderMode() {
+      clearForm();
+      document.getElementById('faq-input-area').style.display = 'none';
+      updateProgress(); updateInfoPanel();
+      if (S.mode === 'tanshin_start') renderTanshin();
+      else if (S.mode === 'roundtrip') renderRT();
+      else if (S.mode === 'roundtrip_stay') renderRMS();
+      else if (S.mode === 'change' || S.mode === 'stop') renderComingSoon();
+      else if (S.mode === 'expense') renderExp();
+      else renderFAQ();
+    }
+
+    function renderComingSoon() {
+      if (S.messages.length === 0) addBot('準備中です');
+      clearForm();
+    }
+
+    // ─── Progress bar ─────────────────────────────────────────────────────────────
+    function tanshinStage() {
+      if (S.step === -1) return 1;
+      if ([10, 20, 30, 31, 32].includes(S.step)) return 2;
+      if (S.step === 0) return 3;
+      if (S.step === 1) return 4;
+      return 5;
+    }
+    function updateProgress() {
+      const el = document.getElementById('progress-bar');
+      if (S.mode !== 'tanshin_start') { el.innerHTML = ''; return; }
+      const cur = tanshinStage();
+      let h = '<div class="prog-items">';
+      STAGES.forEach((lbl, i) => {
+        const n = i + 1, cls = n < cur ? 'prog-done' : n === cur ? 'prog-current' : 'prog-future';
+        h += `<div class="prog-item ${cls}"><div class="prog-circle">${n}</div><span class="prog-label">${lbl}</span></div>`;
+        if (n < STAGES.length) {
+          h += `<div class="prog-line ${n < cur ? 'prog-line-done' : 'prog-line-future'}"></div>`;
+        }
+      });
+      el.innerHTML = h + '</div>';
+    }
+
+    // ─── Info panel ───────────────────────────────────────────────────────────────
+    function setConfirmed(key, label, value) {
+      const idx = S.confirmed.findIndex(e => e[0] === key);
+      if (idx >= 0) S.confirmed[idx] = [key, label, value];
+      else S.confirmed.push([key, label, value]);
+    }
+    function updateInfoPanel() {
+      const box = document.getElementById('info-box');
+      if (!['tanshin_start', 'roundtrip', 'roundtrip_stay'].includes(S.mode) || S.confirmed.length === 0) { box.style.display = 'none'; return; }
+      box.style.display = '';
+      const content = document.getElementById('info-content');
+      content.innerHTML = S.confirmed
+        .map(([, label, v]) => `<div class="info-row"><div class="info-key">${label}</div><div class="info-val">${v}</div></div>`)
+        .join('');
+    }
+
+    // ─── HR info ──────────────────────────────────────────────────────────────────
+    function hrInfoRT() {
+      return `人事情報を確認しました。  \n・申請者ID：abc123  \n・申請日：${todayStr()}  \n・職種：総合職（全国型）  \n・受給状況：受給中  \n・年間支給可能残額： :orange[[OK]]  \n・申請理由：移動のみ  \n・経路照合： :orange[[OK]] （登録済み基礎ルートと一致）  \n・経路変更：なし`;
+    }
+    function hrInfoRMS() {
+      return `人事情報を確認しました。  \n・申請者ID：abc123  \n・申請日：${todayStr()}  \n・職種：総合職（全国型）  \n・受給状況：受給中  \n・年間支給可能残額： :orange[[OK]]  \n・申請理由：移動＆宿泊  \n・経路照合： :orange[[OK]] （登録済み基礎ルートと一致）  \n・経路変更：なし  \n・宿泊人数変更：なし`;
+    }
+    function hrInfo(reason) {
+      const base = `人事情報を確認しました。  \n・申請者ID：abc123  \n・申請日：${todayStr()}  \n・職種：総合職（全国型）  \n・配偶者有無：配偶者あり  \n`;
+      if (reason === '重度傷病治療')
+        return base + '・扶養家族等の同居・別居状況：別居（特別障害者）  \n・配偶者の就業・就労状況：当社勤務  \n・配偶者からの申請状況：受けていない  \n・職員からの申請状況：受けていない';
+      if (reason === '養育・教育')
+        return base + '・子の年齢：0歳1カ月  \n・子の就業・就労状況：幼児';
+      if (reason === '介護・看護')
+        return base + '・介護・看護対象者に係る続柄確認：義母  \n・介護・看護対象者に係る職員による所得税法上の扶養状況：該当  \n・介護・看護者⇔介護・看護対象者の居住状況：別居';
+      return base + '・扶養家族等の同居・別居状況：別居  \n・配偶者の就業・就労状況：無職（家事）  \n・職員からの申請状況：受けていない';
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // TANSHIN START
+    // ══════════════════════════════════════════════════════════════════════════════
+    function tGoto(step, prompted) {
+      S.step = step; S.step_prompted = !!prompted;
+      updateProgress(); updateInfoPanel(); renderTanshin();
+    }
+    function renderTanshin() {
+      const s = S.step;
+      if (s === -1) renderT_1();
+      else if (s === 10) renderT10();
+      else if (s === 20) { addBot('回答ありがとうございます。  \n\n支給額を決定するため、「[駅すぱあと](http://expwww.intra.meijiyasuda.co.jp/expwww2/expcgi.exe)の証憑」をアップロードしてください  \n駅すぱあとの検索設定方法は:orange[「20260401_単身赴任の手引き（改訂予定版）.pdfのP10-13」]を参考してください'); tGoto(0, true); }
+      else if (s === 30) renderT30();
+      else if (s === 31) renderT31();
+      else if (s === 32) renderT32();
+      else if (s === 0) renderT0();
+      else if (s === 1) renderT1();
+      else if (s === 2) renderT2();
+    }
+
+    function renderT_1() {
+      if (!S.step_prompted) {
+        addBot('単身赴任旅費の開始申請を始めます。  \n単身赴任旅費の事由発生年月日と申請事由を入力してください。');
+        S.step_prompted = true;
+      }
+      const rOpts = REASONS.map(r => `<option value="${r}"${r === S.reason ? ' selected' : ''}>${r}</option>`).join('');
+      setForm(`<div class="form-box">
+    <div class="form-group"><label class="form-label">事由発生年月日</label>
+      <input class="form-input" type="date" id="t_date" value="${new Date().toISOString().slice(0, 10)}"></div>
+    <div class="form-group"><label class="form-label">申請事由</label>
+      <select class="form-select" id="t_reason">${rOpts}</select></div>
+    <button class="btn-primary" onclick="submitT_1()">決定</button>
+  </div>`);
+    }
+    function submitT_1() {
+      const dv = gv('t_date'); if (!dv) { showWarn('日付を選択してください。'); return; }
+      const d = new Date(dv);
+      S.start_date_str = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+      S.start_month = `${d.getFullYear()}年${d.getMonth() + 1}月`;
+      S.reason = gv('t_reason');
+      setConfirmed('start_date_str', '事由発生年月日', S.start_date_str);
+      setConfirmed('reason', '申請事由', S.reason);
+      addUser(`・事由発生年月日：${S.start_date_str}  \n・申請事由：${S.reason}`);
+      clearForm();
+      spinner('人事情報 確認中…', 2000, () => {
+        addBot(hrInfo(S.reason));
+        const next = S.reason === '重度傷病治療' ? 10 : S.reason === '養育・教育' ? 20 : S.reason === '介護・看護' ? 30 : 0;
+        if (next === 0) { addBot('回答ありがとうございます。  \n\n支給額を決定するため、「[駅すぱあと](http://expwww.intra.meijiyasuda.co.jp/expwww2/expcgi.exe)の証憑」をアップロードしてください  \n駅すぱあとの検索設定方法は:orange[「20260401_単身赴任の手引き（改訂予定版）.pdfのP10-13」]を参考してください'); tGoto(0, true); }
+        else tGoto(next, false);
+      });
+    }
+
+    function renderT10() {
+      if (!S.step_prompted) {
+        addBot('重度傷病治療に係る証憑（医師による診断書）をアップロードしてください。  \n※ PDF、JPG、PNG形式、10MB以下');
+        S.step_prompted = true;
+      }
+      setForm(`<div class="form-box">
+    ${fileInput('f10', 'fn10', '重度傷病証憑（PDF, JPG, PNG）')}
+    <button class="btn-primary" onclick="submitT10()">アップロード</button>
+  </div>`);
+    }
+    function submitT10() {
+      const f = document.getElementById('f10').files[0];
+      if (!f) { showWarn('ファイルをアップロードしてください。'); return; }
+      clearForm();
+      addFileMessage(f, '証憑をアップロードしました。', () => {
+        spinner('証憑 確認中…', 1500, () => {
+            addBot('証憑を確認しました。  \n・重度傷病証憑確認：問題なし  \n・重度傷病者に係る所得税法上の扶養状況：該当  \n\n支給額を決定するため、「[駅すぱあと](http://expwww.intra.meijiyasuda.co.jp/expwww2/expcgi.exe)の証憑」をアップロードしてください  \n駅すぱあとの検索設定方法は:orange[「20260401_単身赴任の手引き（改訂予定版）.pdfのP10-13」]を参考してください');
+          tGoto(0, true);
+        });
+      });
+    }
+
+    function renderT30() {
+      if (!S.step_prompted) {
+        addBot('介護・看護対象者に係る証憑（介護保険被保険者証等）をアップロードしてください。  \n※ PDF、JPG、PNG形式、10MB以下');
+        S.step_prompted = true;
+      }
+      setForm(`<div class="form-box">
+    ${fileInput('f30', 'fn30', '介護・看護対象証憑（PDF, JPG, PNG）')}
+    <button class="btn-primary" onclick="submitT30()">アップロード</button>
+  </div>`);
+    }
+    function submitT30() {
+      const f = document.getElementById('f30').files[0];
+      if (!f) { showWarn('ファイルをアップロードしてください。'); return; }
+      clearForm();
+      addFileMessage(f, '証憑をアップロードしました。', () => {
+        spinner('証憑 確認中…', 1500, () => {
+          addBot('証憑を確認しました。  \n・介護・看護対象証憑確認：問題なし');
+          tGoto(31, false);
+        });
+      });
+    }
+
+    function renderT31() {
+      if (!S.step_prompted) { addBot('介護・看護を担う者は誰でしょうか？'); S.step_prompted = true; }
+      const opts = CAREGIVERS.map(o => `<option value="${o}"${o === S.care_person ? ' selected' : ''}>${o}</option>`).join('');
+      setForm(`<div class="form-box">
+    <div class="form-group"><label class="form-label">介護・看護を担う者</label>
+      <select class="form-select" id="t_care">${opts}</select></div>
+    <button class="btn-primary" onclick="submitT31()">確認</button>
+  </div>`);
+    }
+    function submitT31() {
+      S.care_person = gv('t_care');
+      setConfirmed('care_person', '介護・看護担当', S.care_person);
+      addUser('介護・看護を担う者：' + S.care_person);
+        addBot('回答ありがとうございます。  \n\n支給額を決定するため、「[駅すぱあと](http://expwww.intra.meijiyasuda.co.jp/expwww2/expcgi.exe)の証憑」をアップロードしてください  \n駅すぱあとの検索設定方法は:orange[「20260401_単身赴任の手引き（改訂予定版）.pdfのP10-13」]を参考してください');
+      tGoto(0, true);
+    }
+
+    function renderT0() {
+      setForm(`<div class="form-box">
+    ${fileInput('f0', 'fn0', '駅すぱあとの証憑 (PDF, JPG, PNG)')}
+    <button class="btn-primary" onclick="submitT0()">アップロード</button>
+  </div>`);
+    }
+    function submitT0() {
+      const f = document.getElementById('f0').files[0];
+      if (!f) { showWarn('ファイルをアップロードしてください。'); return; }
+      clearForm();
+      addFileMessage(f, '証憑をアップロードしました。', () => {
+        spinner('読み取り中…', 1500, () => { tGoto(1, false); });
+      });
+    }
+
+    function renderT1() {
+      if (!S.step_prompted) {
+        addBot('証憑の読取り結果を確認し、誤りがあれば修正してください。');
+        S.step_prompted = true;
+      }
+      let mNum = 1;
+      if (S.start_month) { const m = S.start_month.match(/(\d+)月/); if (m) mNum = parseInt(m[1]); }
+      const rem = remainToMarch(mNum);
+      const annv = (parseInt(S.round_trip_amount) || 0) * rem;
+      setForm(`<div class="form-box">
+    <div class="form-group"><label class="form-label">経路・交通手段</label><input class="form-input" id="t1_tr" value="${S.transport}"></div>
+    <div class="form-group"><label class="form-label">総距離</label><input class="form-input" id="t1_di" value="${S.distance}"></div>
+    <div class="form-group"><label class="form-label">赴任先最寄り駅</label><input class="form-input" id="t1_ds" value="${S.dest_station}"></div>
+    <div class="form-group"><label class="form-label">扶養家族等最寄り駅</label><input class="form-input" id="t1_fs" value="${S.family_station}"></div>
+    <div class="col2">
+      <div class="form-group"><label class="form-label">往復金額(円)</label>
+        <input class="form-input" id="t1_rta" value="${S.round_trip_amount}" oninput="calcAnn()"></div>
+      <div class="form-group"><label class="form-label">今年度支給上限額（交通費）(円)</label>
+        <input class="form-input" id="t1_ann" value="${annv}"></div>
+    </div>
+    <button class="btn-primary" onclick="submitT1()">決定</button>
+  </div>`);
+    }
+    function calcAnn() {
+      const rta = parseInt(gv('t1_rta')) || 0;
+      let mNum = 1;
+      if (S.start_month) { const m = S.start_month.match(/(\d+)月/); if (m) mNum = parseInt(m[1]); }
+      document.getElementById('t1_ann').value = rta * remainToMarch(mNum);
+    }
+    function submitT1() {
+      S.transport = gv('t1_tr'); S.distance = gv('t1_di');
+      S.dest_station = gv('t1_ds'); S.family_station = gv('t1_fs');
+      S.round_trip_amount = gv('t1_rta'); S.annual_amount = gv('t1_ann');
+      setConfirmed('transport', '経路・交通手段', S.transport);
+      setConfirmed('distance', '総距離', S.distance);
+      setConfirmed('dest_station', '赴任先最寄り駅', S.dest_station);
+      setConfirmed('family_station', '扶養家族等最寄り駅', S.family_station);
+      setConfirmed('round_trip_amount', '往復金額', S.round_trip_amount + '円');
+      setConfirmed('annual_amount', '今年度支給上限額', S.annual_amount + '円');
+      addUser(`読取り結果を確認しました。  \n・経路・交通手段：${S.transport}  \n・総距離：${S.distance}  \n・赴任先最寄り駅：${S.dest_station}  \n・扶養家族等最寄り駅：${S.family_station}  \n・往復金額：${S.round_trip_amount}円  \n・今年度支給上限額（交通費）：${S.annual_amount}円`);
+      tGoto(2, false);
+    }
+
+    function renderT2() {
+      if (!S.step_prompted) { addBot('以下内容で申請します。問題なければ申請ボタンを押してください。'); S.step_prompted = true; }
+      const defAllow = ['重度傷病治療', '養育・教育', '介護・看護'].includes(S.reason) ? '50000' : '20000';
+      const allow = S.allowance || defAllow;
+      const rOpts = REASONS.map(r => `<option value="${r}"${r === S.reason ? ' selected' : ''}>${r}</option>`).join('');
+      setForm(`<div class="form-box">
+    <div class="form-group"><label class="form-label">申請事由</label><select class="form-select" id="t2_r">${rOpts}</select></div>
+    <div class="form-group"><label class="form-label">支給開始月</label><input class="form-input" id="t2_m" value="${S.start_month}"></div>
+    <div class="form-group"><label class="form-label">利用区間</label><input class="form-input" id="t2_sec" value="${S.dest_station} ⇔ ${S.family_station}"></div>
+    <div class="form-group"><label class="form-label">手当(補助)支給額</label><input class="form-input" id="t2_al" value="${allow}"></div>
+    <div class="form-group"><label class="form-label">今年度支給上限額（交通費）</label><input class="form-input" id="t2_an" value="${S.annual_amount}"></div>
+    <button class="btn-primary" onclick="submitT2()">申請</button>
+  </div>`);
+    }
+    function submitT2() {
+      const r = gv('t2_r'), m = gv('t2_m'), sec = gv('t2_sec'), al = gv('t2_al'), an = gv('t2_an');
+      setConfirmed('reason', '申請事由', r);
+      setConfirmed('start_month', '支給開始月', m);
+      setConfirmed('section', '利用区間', sec);
+      setConfirmed('allowance', '手当(補助)支給額', al + '円');
+      setConfirmed('annual_amount', '今年度支給上限額', an + '円');
+      updateInfoPanel();
+      addUser(`申請する  \n・申請事由：${r}  \n・支給開始月：${m}  \n・利用区間：${sec}  \n・手当(補助)支給額：${al}円  \n・今年度支給上限額（交通費）：${an}円`);
+      clearForm(); addBot('申請が完了しました。');
+      S.step = 12; updateProgress();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // ROUNDTRIP (移動のみ)
+    // ══════════════════════════════════════════════════════════════════════════════
+    function rtGoto(step) { S.rt_step = step; S.rt_prompted = false; renderRT(); }
+    function renderRT() {
+      if (S.rt_variant === 'stay') { renderRMS(); return; }
+      if (S.rt_step === 0) renderRT0();
+      else if (S.rt_step === 1) renderRT1();
+      else if (S.rt_step === 3) renderRT3();
+    }
+
+    function renderRT0() {
+      if (!S.rt_prompted) { addBot('単身赴任旅費の往復申請を開始します。  \n証憑をアップロードしてください。'); S.rt_prompted = true; }
+      setForm(`<div class="form-box">
+    ${fileInput('frt0', 'fnrt0', '証憑ファイル')}
+    <button class="btn-primary" onclick="submitRT0()">次へ</button>
+  </div>`);
+    }
+    function submitRT0() {
+        const f = document.getElementById('frt0').files[0];
+        if (!f) { showWarn('証憑ファイルを選択してください。'); return; }
+        const isStayFlow = (f.name || '').includes('宿泊');
+        clearForm();
+        addFileMessage(f, '証憑をアップロードしました。', () => {
+            if (isStayFlow) {
+                spinner('読み取り中…', 2000, () => {
+                    S.rt_variant = 'stay';
+                    S.rms_fields = {
+                        '往路_利用日': '2025/10/17', '往路_交通手段': '電車', '往路_経路': '広島市内→小倉→大分', '往路_交通費': '23,600円',
+                        '復路_利用日': '2025/10/19', '復路_交通手段': '電車', '復路_経路': '大分→小倉→広島市内', '復路_交通費': '23,600円',
+                        '宿泊日_1': '2025/10/17', '宿泊先名称_1': 'JR九州ホテルブラッサム大分', '宿泊先住所_1': '大分市要町1-14 JRおおいたシティ8F', '宿泊人数_1': '3', '宿泊費_1': '54,750円',
+                        '宿泊日_2': '2025/10/19', '宿泊先名称_2': 'HOTEL AZ 大分日出店', '宿泊先住所_2': '大分県大分市西鶴崎1-7-17', '宿泊人数_2': '3', '宿泊費_2': '15,950円',
+                    };
+                    addBot('以下の読取り結果を確認し、必要に応じて修正してください。');
+                    S.rms_step = 1; S.rms_prompted = true; renderRT();
+                });
+            } else {
+                S.rt_variant = 'move';
+                S.rt_fields = { '往路_利用日': '2025/10/03', '往路_交通手段': '電車', '往路_経路': '東京都区内→袋井', '往路_交通費': '記載なし', '復路_利用日': '2025/10/03', '復路_交通手段': '電車', '復路_経路': '袋井→東京都区内', '復路_交通費': '8140円', '交通費_合計': '14940円' };
+                spinner('読み取り中…', 2000, () => {
+                    addBot('以下の読取り結果を確認し、必要に応じて修正してください。');
+                    S.rt_step = 1; S.rt_prompted = true; renderRT();
+                });
+            }
+        });
+    }
+
+    function renderRT1() {
+      const f = S.rt_fields;
+      setForm(`<div class="form-box">
+    <div class="section-label">移動</div>
+    <div class="expander"><div class="expander-header">往路</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rt_od" value="${f['往路_利用日'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rt_ot" value="${f['往路_交通手段'] || ''}"></div>
+      <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rt_or" value="${f['往路_経路'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rt_of" value="${f['往路_交通費'] || ''}"></div>
+    </div></div>
+    <div class="expander"><div class="expander-header">復路</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rt_rd" value="${f['復路_利用日'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rt_rt" value="${f['復路_交通手段'] || ''}"></div>
+      <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rt_rr" value="${f['復路_経路'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rt_rf" value="${f['復路_交通費'] || ''}"></div>
+    </div></div>
+    <div class="form-group"><label class="form-label">交通費 合計</label><input class="form-input" id="rt_tot" value="${f['交通費_合計'] || ''}"></div>
+    <button class="btn-primary" onclick="submitRT1()">確認して次へ</button>
+  </div>`);
+    }
+    function submitRT1() {
+      const od = gv('rt_od'), ot = gv('rt_ot'), orr = gv('rt_or'), of = gv('rt_of');
+      const rd = gv('rt_rd'), rt = gv('rt_rt'), rr = gv('rt_rr'), rf = gv('rt_rf'), tot = gv('rt_tot');
+      S.rt_fields = { '往路_利用日': od, '往路_交通手段': ot, '往路_経路': orr, '往路_交通費': of, '復路_利用日': rd, '復路_交通手段': rt, '復路_経路': rr, '復路_交通費': rf, '交通費_合計': tot };
+      setConfirmed('rt_od', '往路 / 利用日', od);
+      setConfirmed('rt_ot', '往路 / 交通手段', ot);
+      setConfirmed('rt_or', '往路 / 経路', orr);
+      setConfirmed('rt_of', '往路 / 交通費', of);
+      setConfirmed('rt_rd', '復路 / 利用日', rd);
+      setConfirmed('rt_rt', '復路 / 交通手段', rt);
+      setConfirmed('rt_rr', '復路 / 経路', rr);
+      setConfirmed('rt_rf', '復路 / 交通費', rf);
+      setConfirmed('rt_tot', '交通費 合計', tot);
+      updateInfoPanel();
+      addUser(`内容を確認して次へ進む  \n【移動 / 往路】  \n・利用日：${od}  \n・交通手段：${ot}  \n・経路：${orr}  \n・交通費：${of}  \n【移動 / 復路】  \n・利用日：${rd}  \n・交通手段：${rt}  \n・経路：${rr}  \n・交通費：${rf}  \n・交通費 合計：${tot}`);
+      clearForm();
+      spinner('人事情報・ルート照合確認中…', 2000, () => {
+        addBot(hrInfoRT());
+        S.rt_step = 3; S.rt_prompted = false; renderRT();
+      });
+    }
+
+    function renderRT3() {
+      if (!S.rt_prompted) { addBot('以下内容で申請します。問題なければ申請ボタンを押してください。'); S.rt_prompted = true; }
+      const f = S.rt_fields;
+      setForm(`<div class="form-box">
+    <div class="section-label">移動</div>
+    <div class="expander"><div class="expander-header">往路</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rt3_od" value="${f['往路_利用日'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rt3_ot" value="${f['往路_交通手段'] || ''}"></div>
+      <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rt3_or" value="${f['往路_経路'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rt3_of" value="${f['往路_交通費'] || ''}"></div>
+    </div></div>
+    <div class="expander"><div class="expander-header">復路</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rt3_rd" value="${f['復路_利用日'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rt3_rt" value="${f['復路_交通手段'] || ''}"></div>
+      <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rt3_rr" value="${f['復路_経路'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rt3_rf" value="${f['復路_交通費'] || ''}"></div>
+    </div></div>
+    <div class="form-group"><label class="form-label">交通費 合計</label><input class="form-input" id="rt3_tot" value="${f['交通費_合計'] || ''}"></div>
+    <button class="btn-primary" onclick="submitRT3()">申請</button>
+  </div>`);
+    }
+    function submitRT3() {
+      const od = gv('rt3_od'), ot = gv('rt3_ot'), orr = gv('rt3_or'), of = gv('rt3_of');
+      const rd = gv('rt3_rd'), rt = gv('rt3_rt'), rr = gv('rt3_rr'), rf = gv('rt3_rf'), tot = gv('rt3_tot');
+      setConfirmed('rt_od', '往路 / 利用日', od);
+      setConfirmed('rt_ot', '往路 / 交通手段', ot);
+      setConfirmed('rt_or', '往路 / 経路', orr);
+      setConfirmed('rt_of', '往路 / 交通費', of);
+      setConfirmed('rt_rd', '復路 / 利用日', rd);
+      setConfirmed('rt_rt', '復路 / 交通手段', rt);
+      setConfirmed('rt_rr', '復路 / 経路', rr);
+      setConfirmed('rt_rf', '復路 / 交通費', rf);
+      setConfirmed('rt_tot', '交通費 合計', tot);
+      setConfirmed('rt_payout', '支給予定', nextMonthJp());
+      setConfirmed('rt_remain', '支給可能残額', '373,160円');
+      updateInfoPanel();
+      addUser(`申請する  \n【移動 / 往路】  \n・利用日：${od}  \n・交通手段：${ot}  \n・経路：${orr}  \n・交通費：${of}  \n【移動 / 復路】  \n・利用日：${rd}  \n・交通手段：${rt}  \n・経路：${rr}  \n・交通費：${rf}  \n・交通費 合計：${tot}`);
+      clearForm();
+      addBot(`申請を受け付けました。  \n支給予定は :orange[${nextMonthJp()}] です。  \n今年度の支給可能残額は :orange[373,160円] です。`);
+      S.rt_step = 4;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // ROUNDTRIP + STAY (移動＆宿泊)
+    // ══════════════════════════════════════════════════════════════════════════════
+    function rmsGoto(step) { S.rms_step = step; S.rms_prompted = false; renderRMS(); }
+    function renderRMS() {
+      if (S.rms_step === 0) renderRMS0();
+      else if (S.rms_step === 1) renderRMS1();
+      else if (S.rms_step === 2) renderRMS2();
+      else if (S.rms_step === 5) renderRMS5();
+    }
+    function renderRMS0() {
+      if (!S.rms_prompted) { addBot('単身赴任旅費の往復申請を開始します。  \n証憑をアップロードしてください。'); S.rms_prompted = true; }
+      setForm(`<div class="form-box">
+    ${fileInput('frms0', 'fnrms0', '証憑ファイル')}
+    <button class="btn-primary" onclick="submitRMS0()">次へ</button>
+  </div>`);
+    }
+    function submitRMS0() {
+        const f = document.getElementById('frms0').files[0];
+        if (!f) { showWarn('証憑ファイルを選択してください。'); return; }
+        S.rms_fields = {
+            '往路_利用日': '2025/10/17', '往路_交通手段': '電車', '往路_経路': '広島市内→小倉→大分', '往路_交通費': '23,600円',
+            '復路_利用日': '2025/10/19', '復路_交通手段': '電車', '復路_経路': '大分→小倉→広島市内', '復路_交通費': '23,600円',
+            '宿泊日_1': '2025/10/17', '宿泊先名称_1': 'JR九州ホテルブラッサム大分', '宿泊先住所_1': '大分市要町1-14 JRおおいたシティ8F', '宿泊人数_1': '3', '宿泊費_1': '54,750円',
+            '宿泊日_2': '2025/10/19', '宿泊先名称_2': 'HOTEL AZ 大分日出店', '宿泊先住所_2': '大分県大分市西鶴崎1-7-17', '宿泊人数_2': '3', '宿泊費_2': '15,950円',
+        };
+        clearForm();
+        addFileMessage(f, '証憑をアップロードしました。', () => {
+            spinner('読み取り中…', 2000, () => { S.rms_step = 1; S.rms_prompted = true; renderRMS(); });
+        });
+    }
+
+    function renderRMS1() {
+        const f = S.rms_fields;
+        setForm(`<div class="form-box">
+<div class="section-label">移動</div>
+<div class="expander"><div class="expander-header">往路</div><div class="expander-body">
+    <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rms_od" value="${f['往路_利用日'] || ''}"></div>
+    <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rms_ot" value="${f['往路_交通手段'] || ''}"></div>
+    <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rms_or" value="${f['往路_経路'] || ''}"></div>
+    <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rms_of" value="${f['往路_交通費'] || ''}"></div>
+</div></div>
+<div class="expander"><div class="expander-header">復路</div><div class="expander-body">
+    <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rms_rd" value="${f['復路_利用日'] || ''}"></div>
+    <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rms_rt" value="${f['復路_交通手段'] || ''}"></div>
+    <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rms_rr" value="${f['復路_経路'] || ''}"></div>
+    <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rms_rf" value="${f['復路_交通費'] || ''}"></div>
+</div></div>
+<hr style="margin:8px 0"><div class="section-label">宿泊</div>
+<div class="expander"><div class="expander-header">宿泊1</div><div class="expander-body">
+    <div class="form-group"><label class="form-label">宿泊日</label><input class="form-input" id="rms_sd1" value="${f['宿泊日_1'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊先名称</label><input class="form-input" id="rms_sn1" value="${f['宿泊先名称_1'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊先住所</label><input class="form-input" id="rms_sa1" value="${f['宿泊先住所_1'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊人数</label><input class="form-input" id="rms_sg1" value="${f['宿泊人数_1'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊費</label><input class="form-input" id="rms_sc1" value="${f['宿泊費_1'] || ''}"></div>
+</div></div>
+<div class="expander"><div class="expander-header">宿泊2</div><div class="expander-body">
+    <div class="form-group"><label class="form-label">宿泊日</label><input class="form-input" id="rms_sd2" value="${f['宿泊日_2'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊先名称</label><input class="form-input" id="rms_sn2" value="${f['宿泊先名称_2'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊先住所</label><input class="form-input" id="rms_sa2" value="${f['宿泊先住所_2'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊人数</label><input class="form-input" id="rms_sg2" value="${f['宿泊人数_2'] || ''}"></div>
+    <div class="form-group"><label class="form-label">宿泊費</label><input class="form-input" id="rms_sc2" value="${f['宿泊費_2'] || ''}"></div>
+</div></div>
+<button class="btn-primary" onclick="submitRMS1()">確認して次へ</button>
+</div>`);
+    }
+    function submitRMS1() {
+        const od = gv('rms_od'), ot = gv('rms_ot'), orr = gv('rms_or'), of = gv('rms_of');
+        const rd = gv('rms_rd'), rt = gv('rms_rt'), rr = gv('rms_rr'), rf = gv('rms_rf');
+        const sd1 = gv('rms_sd1'), sn1 = gv('rms_sn1'), sa1 = gv('rms_sa1'), sg1 = gv('rms_sg1'), sc1 = gv('rms_sc1');
+        const sd2 = gv('rms_sd2'), sn2 = gv('rms_sn2'), sa2 = gv('rms_sa2'), sg2 = gv('rms_sg2'), sc2 = gv('rms_sc2');
+        setConfirmed('rms_od', '往路 / 利用日', od);
+        setConfirmed('rms_ot', '往路 / 交通手段', ot);
+        setConfirmed('rms_or', '往路 / 経路', orr);
+        setConfirmed('rms_of', '往路 / 交通費', of);
+        setConfirmed('rms_rd', '復路 / 利用日', rd);
+        setConfirmed('rms_rt', '復路 / 交通手段', rt);
+        setConfirmed('rms_rr', '復路 / 経路', rr);
+        setConfirmed('rms_rf', '復路 / 交通費', rf);
+        setConfirmed('rms_sd1', '宿泊1 / 宿泊日', sd1);
+        setConfirmed('rms_sn1', '宿泊1 / 宿泊先名称', sn1);
+        setConfirmed('rms_sa1', '宿泊1 / 宿泊先住所', sa1);
+        setConfirmed('rms_sg1', '宿泊1 / 宿泊人数', sg1 + '人');
+        setConfirmed('rms_sc1', '宿泊1 / 宿泊費', sc1);
+        setConfirmed('rms_sd2', '宿泊2 / 宿泊日', sd2);
+        setConfirmed('rms_sn2', '宿泊2 / 宿泊先名称', sn2);
+        setConfirmed('rms_sa2', '宿泊2 / 宿泊先住所', sa2);
+        setConfirmed('rms_sg2', '宿泊2 / 宿泊人数', sg2 + '人');
+        setConfirmed('rms_sc2', '宿泊2 / 宿泊費', sc2);
+        updateInfoPanel();
+        addUser(`内容を確認して次へ進む  \n【移動 / 往路】  \n・利用日：${od}  \n・交通手段：${ot}  \n・経路：${orr}  \n・交通費：${of}  \n【移動 / 復路】  \n・利用日：${rd}  \n・交通手段：${rt}  \n・経路：${rr}  \n・交通費：${rf}  \n【宿泊1】  \n・宿泊日：${sd1}  \n・宿泊先名称：${sn1}  \n・宿泊先住所：${sa1}  \n・宿泊人数：${sg1}人  \n・宿泊費：${sc1}  \n【宿泊2】  \n・宿泊日：${sd2}  \n・宿泊先名称：${sn2}  \n・宿泊先住所：${sa2}  \n・宿泊人数：${sg2}人  \n・宿泊費：${sc2}`);
+        clearForm();
+        spinner('人事情報・ルート照合確認中…', 2000, () => {
+            addBot(hrInfoRMS());
+            rmsGoto(2);
+        });
+    }
+
+    function renderRMS2() {
+        if (!S.rms_prompted) { addBot('距離証憑をアップロードしてください。'); S.rms_prompted = true; }
+        setForm(`<div class="form-box">
+${fileInput('frms2', 'fnrms2', '距離証憑ファイル')}
+<button class="btn-primary" onclick="submitRMS2()">次へ</button>
+</div>`);
+    }
+    function submitRMS2() {
+        const f = document.getElementById('frms2').files[0];
+        if (!f) { showWarn('距離証憑ファイルを選択してください。'); return; }
+        clearForm();
+        addFileMessage(f, '距離証憑をアップロードしました。', () => {
+            spinner('距離証憑を確認中…', 1500, () => {
+                setConfirmed('rms_dist', '距離証憑', '確認済み');
+                updateInfoPanel();
+                addBot('距離証憑の内容を確認しました。  \n ・単身赴任先住所 ↔ 宿泊先住所 の距離チェック：:orange[[OK]]（50km以内）  \n ・単身赴任先住所照合：:orange[[OK]]  \n ・宿泊先住所照合：:orange[[OK]]');
+                rmsGoto(5);
+            });
+        });
+    }
+
+    function renderRMS5() {
+      if (!S.rms_prompted) { addBot('以下内容で申請します。問題なければ申請ボタンを押してください。'); S.rms_prompted = true; }
+      const f = S.rms_fields;
+      setForm(`<div class="form-box">
+    <div class="section-label">移動</div>
+    <div class="expander"><div class="expander-header">往路</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rms5_od" value="${f['往路_利用日'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rms5_ot" value="${f['往路_交通手段'] || ''}"></div>
+      <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rms5_or" value="${f['往路_経路'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rms5_of" value="${f['往路_交通費'] || ''}"></div>
+    </div></div>
+    <div class="expander"><div class="expander-header">復路</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">利用日</label><input class="form-input" id="rms5_rd" value="${f['復路_利用日'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通手段</label><input class="form-input" id="rms5_rt" value="${f['復路_交通手段'] || ''}"></div>
+      <div class="form-group"><label class="form-label">経路</label><input class="form-input" id="rms5_rr" value="${f['復路_経路'] || ''}"></div>
+      <div class="form-group"><label class="form-label">交通費</label><input class="form-input" id="rms5_rf" value="${f['復路_交通費'] || ''}"></div>
+    </div></div>
+    <hr style="margin:8px 0"><div class="section-label">宿泊</div>
+    <div class="expander"><div class="expander-header">宿泊1</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">宿泊日</label><input class="form-input" id="rms5_sd1" value="${f['宿泊日_1'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊先名称</label><input class="form-input" id="rms5_sn1" value="${f['宿泊先名称_1'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊先住所</label><input class="form-input" id="rms5_sa1" value="${f['宿泊先住所_1'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊人数</label><input class="form-input" id="rms5_sg1" value="${f['宿泊人数_1'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊費</label><input class="form-input" id="rms5_sc1" value="${f['宿泊費_1'] || ''}"></div>
+    </div></div>
+    <div class="expander"><div class="expander-header">宿泊2</div><div class="expander-body">
+      <div class="form-group"><label class="form-label">宿泊日</label><input class="form-input" id="rms5_sd2" value="${f['宿泊日_2'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊先名称</label><input class="form-input" id="rms5_sn2" value="${f['宿泊先名称_2'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊先住所</label><input class="form-input" id="rms5_sa2" value="${f['宿泊先住所_2'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊人数</label><input class="form-input" id="rms5_sg2" value="${f['宿泊人数_2'] || ''}"></div>
+      <div class="form-group"><label class="form-label">宿泊費</label><input class="form-input" id="rms5_sc2" value="${f['宿泊費_2'] || ''}"></div>
+    </div></div>
+    <button class="btn-primary" onclick="submitRMS5()">申請</button>
+  </div>`);
+    }
+    function submitRMS5() {
+      const od = gv('rms5_od'), ot = gv('rms5_ot'), orr = gv('rms5_or'), of = gv('rms5_of');
+      const rd = gv('rms5_rd'), rt = gv('rms5_rt'), rr = gv('rms5_rr'), rf = gv('rms5_rf');
+      const sd1 = gv('rms5_sd1'), sn1 = gv('rms5_sn1'), sa1 = gv('rms5_sa1'), sg1 = gv('rms5_sg1'), sc1 = gv('rms5_sc1');
+      const sd2 = gv('rms5_sd2'), sn2 = gv('rms5_sn2'), sa2 = gv('rms5_sa2'), sg2 = gv('rms5_sg2'), sc2 = gv('rms5_sc2');
+      setConfirmed('rms_od', '往路 / 利用日', od);
+      setConfirmed('rms_ot', '往路 / 交通手段', ot);
+      setConfirmed('rms_or', '往路 / 経路', orr);
+      setConfirmed('rms_of', '往路 / 交通費', of);
+      setConfirmed('rms_rd', '復路 / 利用日', rd);
+      setConfirmed('rms_rt', '復路 / 交通手段', rt);
+      setConfirmed('rms_rr', '復路 / 経路', rr);
+      setConfirmed('rms_rf', '復路 / 交通費', rf);
+      setConfirmed('rms_sd1', '宿泊1 / 宿泊日', sd1);
+      setConfirmed('rms_sn1', '宿泊1 / 宿泊先名称', sn1);
+      setConfirmed('rms_sa1', '宿泊1 / 宿泊先住所', sa1);
+      setConfirmed('rms_sg1', '宿泊1 / 宿泊人数', sg1 + '人');
+      setConfirmed('rms_sc1', '宿泊1 / 宿泊費', sc1);
+      setConfirmed('rms_sd2', '宿泊2 / 宿泊日', sd2);
+      setConfirmed('rms_sn2', '宿泊2 / 宿泊先名称', sn2);
+      setConfirmed('rms_sa2', '宿泊2 / 宿泊先住所', sa2);
+      setConfirmed('rms_sg2', '宿泊2 / 宿泊人数', sg2 + '人');
+      setConfirmed('rms_sc2', '宿泊2 / 宿泊費', sc2);
+      setConfirmed('rms_payout', '支給予定', nextMonthJp());
+      setConfirmed('rms_remain', '支給可能残額', '373,160円');
+      updateInfoPanel();
+      addUser(`申請する  \n【移動 / 往路】  \n・利用日：${od}  \n・交通手段：${ot}  \n・経路：${orr}  \n・交通費：${of}  \n【移動 / 復路】  \n・利用日：${rd}  \n・交通手段：${rt}  \n・経路：${rr}  \n・交通費：${rf}  \n【宿泊1】  \n・宿泊日：${sd1}  \n・宿泊先名称：${sn1}  \n・宿泊先住所：${sa1}  \n・宿泊人数：${sg1}人  \n・宿泊費：${sc1}  \n【宿泊2】  \n・宿泊日：${sd2}  \n・宿泊先名称：${sn2}  \n・宿泊先住所：${sa2}  \n・宿泊人数：${sg2}人  \n・宿泊費：${sc2}`);
+      clearForm();
+      addBot(`申請を受け付けました。  \n支給予定は :orange[${nextMonthJp()}] です。  \n今年度の支給可能残額は :orange[373,160円] です。`);
+      S.rms_step = 6;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // EXPENSE
+    // ══════════════════════════════════════════════════════════════════════════════
+    function expGoto(step) { S.exp_step = step; S.exp_prompted = false; renderExp(); }
+    function renderExp() {
+      const s = S.exp_step;
+      if (s === -2) renderE_2();
+      else if (s === 1) renderE1();
+      else if (s === -1) renderE_1();
+      else if (s === 2) renderE2();
+      else if (s === 10) renderE10();
+      else if (s === 15) renderE15();
+      else if (s === 13) renderE13();
+      else if (s === 14) renderE14();
+      else if (s === 19) renderE19();
+      else if (s === 22) renderE22();
+      else if (s === 23) renderE23();
+    }
+
+    // Step -2: 証憑選択
+    function renderE_2() {
+      if (!S.exp_prompted) { addBot('経費申請する証憑を選択してください。'); S.exp_prompted = true; }
+      setForm(`<div class="form-box">
+    <div class="form-group">
+      <div style="border:3px solid #2563eb;border-radius:10px;padding:6px;display:inline-block">
+        <div style="width:200px;height:130px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#666;font-size:13px;text-align:center">🧾<br>証憑サンプル1<br>（レシート）</div>
+      </div>
+      <div style="margin-top:5px;font-size:12px;color:#2563eb;font-weight:600">✓ 証憑サンプル1 を選択中</div>
+    </div>
+    <button class="btn-primary" onclick="submitE_2()">この証憑で進む</button>
+  </div>`);
+    }
+    function submitE_2() {
+      addUser('選択した証憑\n\n[証憑サンプル1]');
+      clearForm();
+      spinner('読み取り中…', 2000, () => {
+        S.exp_extracted = { '実施日': '2025-09-16', '取引先名称': 'シャトレーゼ 土佐高岡店', '取引先住所': '高知県土佐市高岡町乙3398-1', '非登録事業者': 'いいえ（登録番号：T4490001010202）', '金額': 4449, '消費税額': 329 };
+        addBot('証憑の読み取り結果です。誤りがあれば修正してください。');
+        S.exp_step = 1; S.exp_prompted = true; renderExp();
+      });
+    }
+
+    // Step 1: OCR確認
+    function renderE1() {
+      const ex = S.exp_extracted;
+      setForm(`<div class="form-box">
+    <div style="color:#d00;font-size:11px;margin-bottom:8px">※読み取り値（赤字）を確認・修正してください</div>
+    <div class="form-group"><label class="form-label">実施日</label><input class="form-input" id="ex_d" style="color:#d00" value="${ex['実施日'] || ''}"></div>
+    <div class="form-group"><label class="form-label">取引先名称</label><input class="form-input" id="ex_n" style="color:#d00" value="${ex['取引先名称'] || ''}"></div>
+    <div class="form-group"><label class="form-label">取引先住所</label><input class="form-input" id="ex_a" style="color:#d00" value="${ex['取引先住所'] || ''}"></div>
+    <div class="form-group"><label class="form-label">非登録事業者</label><input class="form-input" id="ex_u" style="color:#d00" value="${ex['非登録事業者'] || ''}"></div>
+    <div class="col2">
+      <div class="form-group"><label class="form-label">金額（円）</label><input class="form-input" id="ex_amt" type="number" style="color:#d00" value="${ex['金額'] || 0}"></div>
+      <div class="form-group"><label class="form-label">消費税額（円）</label><input class="form-input" id="ex_tax" type="number" style="color:#d00" value="${ex['消費税額'] || 0}"></div>
+    </div>
+    <button class="btn-primary" onclick="submitE1()">次へ</button>
+  </div>`);
+    }
+    function submitE1() {
+      S.exp_extracted = { '実施日': gv('ex_d'), '取引先名称': gv('ex_n'), '取引先住所': gv('ex_a'), '非登録事業者': gv('ex_u'), '金額': parseInt(gv('ex_amt')) || 0, '消費税額': parseInt(gv('ex_tax')) || 0 };
+      addUser('読み取り結果を確認しました。');
+      expGoto(-1);
+    }
+
+    // Step -1: 拠点コード・支出区分
+    function renderE_1() {
+      if (!S.exp_prompted) { addBot('拠点コードを入力し、支出区分を選択してください。'); S.exp_prompted = true; }
+      const catOpts = ['生保', '損保', '代理店', '法営', '窓販', '会社Cカ私的利用精算'].map(o => `<option value="${o}"${o === S.exp_expense_category ? ' selected' : ''}>${o}</option>`).join('');
+      setForm(`<div class="form-box">
+    <div class="form-group"><label class="form-label">拠点コード</label><input class="form-input" id="e_base" value="${S.exp_base_code}"></div>
+    <div class="form-group"><label class="form-label">支出区分</label><select class="form-select" id="e_cat">${catOpts}</select></div>
+    <button class="btn-primary" onclick="submitE_1()">次へ</button>
+  </div>`);
+    }
+    function submitE_1() {
+      const base = gv('e_base').trim();
+      if (!base) { showWarn('拠点コードを入力してください。'); return; }
+      S.exp_base_code = base; S.exp_expense_category = gv('e_cat');
+      addUser(`拠点コード：${base}\n支出区分：${S.exp_expense_category}`);
+      expGoto(2);
+    }
+
+    // Step 2: 経費説明
+    function renderE2() {
+      if (!S.exp_prompted) { addBot('科費目を決めるため、経費に関する説明を入力してください。（スキップ可）'); S.exp_prompted = true; }
+      setForm(`<div class="form-box">
+    <div style="border:1px solid #e0e0e0;border-radius:6px;padding:10px;margin-bottom:10px">
+      <div style="color:#d00;font-weight:600;font-size:12px;margin-bottom:6px">サンプル文章（クリックで入力欄にセット）</div>
+      <button class="sample-btn" onclick="setSample('取引先訪問時の手土産としてお菓子の詰め合わせを購入')">取引先訪問時の手土産としてお菓子の詰め合わせを購入</button>
+      <button class="sample-btn" onclick="setSample('部内ミーティングでの差し入れ用に購入')">部内ミーティングでの差し入れ用に購入</button>
+      <button class="sample-btn" onclick="setSample('来客対応時のお茶菓子として購入')">来客対応時のお茶菓子として購入</button>
+    </div>
+    <div class="form-group"><label class="form-label">経費に関する説明</label>
+      <textarea class="form-textarea" id="e_desc" rows="3" placeholder="経費の説明を入力してください...">${S.exp_description || ''}</textarea></div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="submitE2(false)">次へ</button>
+      <button class="btn-secondary" onclick="submitE2(true)">スキップ</button>
+    </div>
+  </div>`);
+    }
+    function setSample(text) { document.getElementById('e_desc').value = text; S.exp_description = text; }
+    function submitE2(skip) {
+      if (skip) { S.exp_description = null; addUser('経費に関する説明をスキップしました。'); }
+      else { const d = gv('e_desc').trim(); S.exp_description = d || null; addUser(d ? `経費に関する説明: ${d}` : '経費に関する説明: （未入力）'); }
+      expGoto(10);
+    }
+
+    // Step 10: 取引先企業数
+    function renderE10() {
+      if (!S.exp_prompted) { addBot('<span style="color:#d00">【科費目を決めるための質問】購入したお菓子を渡す取引先企業数は？</span>'); S.exp_prompted = true; }
+      setForm(`<div class="form-box">
+    <select class="form-select" id="e_c1" style="color:#d00">
+      <option value="">選択してください。</option>
+      <option value="5未満"${S.exp_choice1 === '5未満' ? ' selected' : ''}>5未満</option>
+      <option value="5以上"${S.exp_choice1 === '5以上' ? ' selected' : ''}>5以上</option>
+    </select>
+    <button class="btn-primary" onclick="submitE10()" style="margin-top:10px">次へ</button>
+  </div>`);
+    }
+    function submitE10() {
+      const c = gv('e_c1'); if (!c) { showWarn('選択してください。'); return; }
+      S.exp_choice1 = c; addUser(c); expGoto(15);
+    }
+
+    // Step 15: 分類
+    function renderE15() {
+      if (!S.exp_prompted) { addBot('この経費は以下の分類で申請します。誤りがあれば修正してください。'); S.exp_prompted = true; }
+      const lOpts = ['社外贈答（≠後援者会・セミナー等）', '後援者会・セミナー等', '社内飲食等', 'その他'].map(o => `<option value="${o}"${o === S.exp_large ? ' selected' : ''}>${o}</option>`).join('');
+      const mOpts = ['手土産・差入れ', '飲食・弁当・茶菓子代', '日当・交通費・旅費', '菓子折り・生鮮食品・酒', 'バラマキ・広告宣伝物資・キャンペーン賞品', '会場代', '芸能人報酬', '社外講師代', '設営用品・写真代', 'ゴルフ・カラオケ・観劇', 'その他遊戯代', 'その他'].map(o => `<option value="${o}"${o === S.exp_medium ? ' selected' : ''}>${o}</option>`).join('');
+      const sOpts = ['税抜単価１，０００円超（１名または１企業あたり）', '税抜単価１，０００円以下（１名または１企業あたり）'].map(o => `<option value="${o}"${o === S.exp_small ? ' selected' : ''}>${o}</option>`).join('');
+      setForm(`<div class="form-box">
+    <div class="form-group"><label class="form-label" style="color:#d00">大分類</label><select class="form-select" id="e_lg" style="color:#d00">${lOpts}</select></div>
+    <div class="form-group"><label class="form-label" style="color:#d00">中分類</label><select class="form-select" id="e_med" style="color:#d00">${mOpts}</select></div>
+    <div class="form-group"><label class="form-label" style="color:#d00">小分類</label><select class="form-select" id="e_sml" style="color:#d00">${sOpts}</select></div>
+    <button class="btn-primary" onclick="submitE15()">次へ</button>
+  </div>`);
+    }
+    function submitE15() {
+      S.exp_large = gv('e_lg'); S.exp_medium = gv('e_med'); S.exp_small = gv('e_sml');
+      addUser(`大分類：${S.exp_large}\n中分類：${S.exp_medium}\n小分類：${S.exp_small}`);
+      const isUnder = S.exp_small.includes('１，０００円以下');
+      const isBar = S.exp_medium === 'バラマキ・広告宣伝物資・キャンペーン賞品';
+      if (S.exp_choice1 !== '5未満') { S.exp_app_type = 'パターン6'; expGoto(22); }
+      else if (isUnder) { S.exp_app_type = isBar ? 'パターン3' : 'パターン2'; expGoto(22); }
+      else expGoto(13);
+    }
+
+    // Step 13: 受領書
+    function renderE13() {
+      if (!S.exp_prompted) { addBot('贈答先から受領書等を取り付け済み？'); S.exp_prompted = true; }
+      setForm(`<div class="form-box">
+    <div class="radio-group">
+      <label class="radio-option"><input type="radio" name="e_recv" value="はい"> はい</label>
+      <label class="radio-option"><input type="radio" name="e_recv" value="いいえ" checked> いいえ</label>
+    </div>
+    <button class="btn-primary" onclick="submitE13()" style="margin-top:10px">決定</button>
+  </div>`);
+    }
+    function submitE13() {
+      const v = document.querySelector('input[name="e_recv"]:checked')?.value;
+      if (!v) { showWarn('選択してください。'); return; }
+      S.exp_receipt_status = v; S.exp_app_type = v === 'はい' ? 'パターン5' : 'パターン4';
+      addUser(v); expGoto(14);
+    }
+
+    // Step 14: 贈答先情報
+    function renderE14() {
+      if (!S.exp_prompted) { addBot('贈答先の情報を入力してください。（最大10件まで追加できます）'); S.exp_prompted = true; }
+      const seq = S.exp_gift_recipients.length + 1;
+      let giftList = S.exp_gift_recipients.map((g, i) =>
+        `<div class="gift-card"><strong>贈答先${i + 1}：${g['贈答先名称'] || '未入力'}</strong><br>贈答品名: ${g['贈答品名'] || ''}<br>金額: ${(g['贈答合計金額（税込）'] || 0).toLocaleString()}円<br>住所: ${g['贈答先所在地（住所）'] || ''}</div>`
+      ).join('');
+      setForm(`<div class="form-box">
+    ${giftList}
+    <div class="section-label">贈答先情報を追加（${seq}件目）</div>
+    <div class="form-group"><label class="form-label">贈答品名</label><input class="form-input" id="g_item" value="ラングアソートメント、ラスク詰合せ"></div>
+    <div class="form-group"><label class="form-label">贈答合計金額（税込）</label><input class="form-input" id="g_amt" type="number" value="4449"></div>
+    <div class="form-group"><label class="form-label">贈答先名称</label><input class="form-input" id="g_name" value=""></div>
+    <div class="form-group"><label class="form-label">贈答先所在地（住所）</label><input class="form-input" id="g_addr" value=""></div>
+    <button class="btn-primary" onclick="submitE14()">完了</button>
+  </div>`);
+    }
+    function submitE14() {
+      const item = gv('g_item'), amt = parseInt(gv('g_amt')) || 0, name = gv('g_name'), addr = gv('g_addr');
+      S.exp_gift_recipients.push({ '贈答品名': item, '贈答合計金額（税込）': amt, '贈答先名称': name, '贈答先所在地（住所）': addr });
+      addUser(`【贈答先 ${S.exp_gift_recipients.length}件目】\n贈答品名: ${item}\n金額: ${amt.toLocaleString()}円\n贈答先名称: ${name}`);
+      addBot(`贈答先情報を${S.exp_gift_recipients.length}件登録しました。`);
+      expGoto(19);
+    }
+
+    // Step 19: 公務員確認
+    function renderE19() {
+      if (!S.exp_prompted) { addBot('贈答先に公務員を含みますか？'); S.exp_prompted = true; }
+      setForm(`<div class="form-box">
+    <div class="radio-group">
+      <label class="radio-option"><input type="radio" name="e_pub" value="はい"> はい</label>
+      <label class="radio-option"><input type="radio" name="e_pub" value="いいえ" checked> いいえ</label>
+    </div>
+    <button class="btn-primary" onclick="submitE19()" style="margin-top:10px">決定</button>
+  </div>`);
+    }
+    function submitE19() {
+      const v = document.querySelector('input[name="e_pub"]:checked')?.value;
+      if (!v) { showWarn('選択してください。'); return; }
+      S.exp_public_official = v; addUser(v); expGoto(22);
+    }
+
+    // Step 22: 確認
+    function renderE22() {
+      if (!S.exp_prompted) { addBot('以下入力内容に間違いがあれば修正してください。'); S.exp_prompted = true; }
+      const ex = S.exp_extracted;
+      const items = [];
+      if (S.exp_base_code) items.push(['拠点コード', S.exp_base_code]);
+      if (S.exp_expense_category) items.push(['支出区分', S.exp_expense_category]);
+      if (ex['実施日']) items.push(['実施日', ex['実施日']]);
+      if (ex['取引先名称']) items.push(['取引先名称', ex['取引先名称']]);
+      if (ex['取引先住所']) items.push(['取引先住所', ex['取引先住所']]);
+      if (ex['非登録事業者']) items.push(['非登録事業者', ex['非登録事業者']]);
+      if (ex['金額'] != null) items.push(['金額', ex['金額'].toLocaleString() + '円']);
+      if (ex['消費税額'] != null) items.push(['消費税額', ex['消費税額'].toLocaleString() + '円']);
+      if (S.exp_large) items.push(['大分類', S.exp_large]);
+      if (S.exp_medium) items.push(['中分類', S.exp_medium]);
+      if (S.exp_small) items.push(['小分類', S.exp_small]);
+      if (S.exp_receipt_status) items.push(['受領書取り付け済み', S.exp_receipt_status]);
+      if (S.exp_public_official) items.push(['贈答先に公務員を含む', S.exp_public_official]);
+      if (S.exp_app_type) items.push(['申請パターン', S.exp_app_type]);
+      const rows = items.map(([k, v]) => `<div class="confirm-row"><span class="confirm-key">${k}</span><span class="confirm-val">${v}</span></div>`).join('');
+      let gifts = '';
+      if (S.exp_gift_recipients.length > 0) {
+        gifts = `<div style="margin-top:10px"><div class="section-label">贈答先情報（${S.exp_gift_recipients.length}件）</div>` +
+          S.exp_gift_recipients.map((g, i) => `<div class="gift-card"><strong>贈答先${i + 1}：${g['贈答先名称'] || '未入力'}</strong><br>贈答品名: ${g['贈答品名'] || ''}<br>金額: ${(g['贈答合計金額（税込）'] || 0).toLocaleString()}円</div>`).join('') + '</div>';
+      }
+      setForm(`<div class="form-box">
+    <div class="section-label">入力内容確認</div>
+    <div style="border:1px solid #e0e8e8;border-radius:6px;padding:10px;margin-bottom:10px">
+      <div class="section-label" style="font-size:12px;background:#f0f5f5;padding:4px 8px;border-radius:4px">入力した項目</div>
+      ${rows}${gifts}
+    </div>
+    <button class="btn-primary" onclick="submitE22()">次へ</button>
+  </div>`);
+    }
+    function submitE22() {
+      addUser('入力内容を確認しました。');
+      addBot('チャットボットでの入力はここまでです。 \n\n [このリンク](https://example.com)から拠点会計システムを開き、申請を完了してください。 \n\n この証憑画像の「案件登録」は実施済みです。');
+      expGoto(23);
+    }
+
+    // Step 23: 完了
+    function renderE23() {
+      setForm(`<div class="btn-row"><button class="btn-secondary" onclick="switchMode('expense')">最初に戻る</button></div>`);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // FAQ
+    // ══════════════════════════════════════════════════════════════════════════════
+    const FAQ_DATA = [
+      {
+        title: '有給休暇の申請', kw: ['有給', '休暇', '年休', '有休', '休み', '欠勤'],
+        ans: '有給休暇の申請方法は社内ルールで異なります。\n一般的には、(1) 事前申請 → (2) 上長承認 → (3) 勤怠/休暇システム反映、の流れです。\n\n確認したい点：\n- 取得希望日（単日/連続）\n- 申請の締め切り（何営業日前まで）\n- 半休/時間休の可否'
+      },
+      {
+        title: '残業申請・残業代', kw: ['残業', '時間外', '深夜', '休日出勤', '残業代'],
+        ans: '残業の事前申請が必要な会社が多いです。\n- 事前申請の要否（やむを得ない場合の事後申請可否）\n- 36協定の上限や注意点\n- 割増賃金（時間外/深夜/休日）の扱い\n\n社内規程（就業規則・賃金規程）や勤怠ルールを確認してください。'
+      },
+      {
+        title: '交通費・出張精算', kw: ['交通費', '精算', '出張', '経費', '領収書'],
+        ans: '交通費/経費精算は、(1) 申請 → (2) 添付（領収書等）→ (3) 承認 → (4) 振込/給与で支給、が一般的です。\n\n確認したい点：\n- 申請期限（月末締め等）\n- IC履歴/領収書の要否\n- タクシー利用の条件'
+      },
+      {
+        title: '社会保険・扶養', kw: ['社会保険', '扶養', '健康保険', '年金', '保険'],
+        ans: '社会保険の手続きは条件や期限があるため、状況確認が重要です。\n例：扶養追加/削除、氏名・住所変更、退職時の手続きなど。\n\n差し支えない範囲で、どの手続き（扶養追加/変更/退職等）か教えてください。'
+      },
+    ];
+
+    function renderFAQ() {
+      if (S.messages.length === 0) {
+        addBot('こんにちは。人事向けチャットボットのサンプルです。\n\n『有給』『残業』『交通費』『社会保険』など、気になるキーワードで聞いてみてください。');
+      }
+      clearForm();
+      document.getElementById('faq-input-area').style.display = 'block';
+    }
+    function faqSubmit() {
+      const el = document.getElementById('faq-input');
+      const txt = el.value.trim(); if (!txt) return;
+      el.value = '';
+      addUser(txt);
+      setTimeout(() => addBot(faqReply(txt)), 500);
+    }
+    function faqReply(msg) {
+      const low = msg.toLowerCase();
+      let best = null, bscore = 0;
+      FAQ_DATA.forEach(item => {
+        let s = 0; item.kw.forEach(k => { if (low.includes(k)) s++; });
+        if (s > bscore) { best = item; bscore = s; }
+      });
+      const dt = new Date().toISOString().slice(0, 10);
+      let rep;
+      if (!best || bscore === 0) {
+        rep = '明治安田の人事チャットボット（サンプル）です。\n\nご相談内容をもう少し具体的に教えてください。例えば：\n- いつ/だれ/どの制度（有給・残業・経費・社会保険など）\n- 期限があるか\n- 参照したい社内規程名やリンク（あれば）';
+      } else {
+        rep = `【${best.title}】\n${best.ans}\n\n参照（サンプルFAQ）：${best.title}`;
+      }
+      rep += `\n\n---\n※この回答はサンプルです。最終判断は社内規程・人事担当の案内をご確認ください。\n（${dt}）`;
+      return rep;
+    }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────────
+    window.onload = () => { switchMode('tanshin_start'); };
+
+    function openImgModal(src) {
+      document.getElementById('img-modal-img').src = src;
+      document.getElementById('img-modal').classList.add('open');
+    }
+    function closeImgModal() {
+      document.getElementById('img-modal').classList.remove('open');
+    }
+
+    function openPdfModal(src) {
+      document.getElementById('pdf-modal-frame').src = src;
+      document.getElementById('pdf-modal').classList.add('open');
+    }
+    function closePdfModal() {
+      document.getElementById('pdf-modal').classList.remove('open');
+      document.getElementById('pdf-modal-frame').src = '';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeImgModal();
+        closePdfModal();
+      }
+    });
+  </script>
+
+  <div id="img-modal" onclick="closeImgModal()">
+    <span id="img-modal-close" onclick="closeImgModal()">&#x2715;</span>
+    <img id="img-modal-img" src="" alt="preview" onclick="event.stopPropagation()">
+  </div>
+
+  <div id="pdf-modal" onclick="closePdfModal()">
+    <span id="pdf-modal-close" onclick="closePdfModal()">&#x2715;</span>
+    <iframe id="pdf-modal-frame" src="" title="PDF Preview" onclick="event.stopPropagation()"></iframe>
+  </div>
+</body>
+
+</html>

@@ -10,12 +10,53 @@ except ImportError:
     HAS_TESSERACT = False
 
 # ---------------------------------------------------------
-# RAG Retriever モック (本来は src/retriever.py をインポートして使用)
+# 社内規定(PDF)のインデックス化・RAG検索モック
+# (本来は src/pdf_parser.py, src/chunker.py, src/embedder.py, src/indexer.py をインポート)
 # ---------------------------------------------------------
+class RuleIndexManager:
+    """
+    PDFのパース、チャンク化、ベクトル化、インデックス登録を管理するクラス
+    """
+    def __init__(self, dbutils=None):
+        self.dbutils = dbutils
+        # 本来は Databricks Vector Search Client 等をここで初期化します
+        
+    def update_rule_database_from_pdf(self, pdf_path: str):
+        """
+        新しいルールPDFがアップロードされた際に、ベクトルDBを更新する処理
+        """
+        print(f"【ベクトルDB更新】PDFファイル '{pdf_path}' の処理を開始します。")
+        
+        # 1. PDFのパース (src/pdf_parser.py 相当)
+        # 本来は PyMuPDF 等を用いてテキストを抽出
+        print(f"  -> {pdf_path} からテキストを抽出中...")
+        extracted_text = "【単身赴任規定】第1条: 単身赴任手当の支給は...\n【帰省旅費規定】第2条: ..."
+        
+        # 2. チャンク化 (src/chunker.py 相当)
+        print("  -> 抽出したテキストを意味的なまとまり（チャンク）に分割中...")
+        chunks = [
+            {"chunk_id": "c_001", "content": "【単身赴任開始規定】単身赴任手当の支給は、本人が単身赴任状態（適用中ではない）である場合のみ開始可能。"},
+            {"chunk_id": "c_002", "content": "【帰省旅費規定】単身赴任中の者（適用中）に対し、月に1回までの往復交通費実費を支給する。"},
+            {"chunk_id": "c_003", "content": "【支給上限額規定】交通費の支給上限額は、最も経済的な経路（駅すぱあとの検索結果）に基づく往復運賃の残月数分とする。"}
+        ]
+        
+        # 3. ベクトル化 (src/embedder.py 相当)
+        # 本来は Azure OpenAI の text-embedding-ada-002 等を用いてベクトル取得
+        print("  -> 各チャンクのエンベディング（ベクトル化）を取得中...")
+        for chunk in chunks:
+            chunk["embedding"] = [0.01, 0.02, 0.03] # モックのベクトル
+            
+        # 4. インデックスへの保存 (src/indexer.py 相当)
+        # 本来は Databricks Vector Search index にレコードを upsert または Delta Table に書き込み
+        print(f"  -> Databricks Vector Index に {len(chunks)} 件のチャンクを保存/更新しました。")
+        
+        return {"status": "SUCCESS", "message": f"{pdf_path} のインデックス化が完了しました。"}
+
 class MockRuleRetriever:
     def retrieve_rules(self, query):
         """
         RAGによる社内規定（ルール）の検索をシミュレート
+        (Databricks Vector Search を用いた類似度検索)
         """
         rules = []
         if "開始" in query:
@@ -49,14 +90,21 @@ class MockRuleRetriever:
         return True, "ルールに適合しています。"
 
 class TanshinFuninProcessor:
-    def __init__(self, user_id, llm_client=None):
+    def __init__(self, user_id, llm_client=None, dbutils=None):
         self.user_id = user_id
         self.hr_data = None
         self.application_type = None
         self.state = {}
         self.ocr_results = []
-        # RAG検索モジュールの初期化
+        # RAG関連モジュール
+        self.rule_manager = RuleIndexManager(dbutils)
         self.retriever = MockRuleRetriever()
+
+    def update_rules(self, pdf_path):
+        """
+        管理者が規定PDFを更新した際に呼び出されるメソッド
+        """
+        return self.rule_manager.update_rule_database_from_pdf(pdf_path)
 
     def determine_application_type(self, user_input):
         if "開始" in user_input or "事由" in user_input:
@@ -75,13 +123,9 @@ class TanshinFuninProcessor:
         self.hr_data = mock_db.get(self.user_id)
         return self.hr_data
 
-    # ③ 申請を進めてよいかどうかのルールチェックを行なう（RAGを用いた１次チェック）
     def first_rule_check(self, input_data=None):
-        # 1. RAGから関連ルールを検索
         query = f"{self.application_type}の条件"
         retrieved_rules = self.retriever.retrieve_rules(query)
-        
-        # 2. ルールと人事情報を突き合わせて判定
         is_ok, reason = self.retriever.evaluate_rule(retrieved_rules, self.hr_data)
         
         if is_ok:
@@ -138,18 +182,13 @@ class TanshinFuninProcessor:
             result["総距離"] = distances[0]
         return result
 
-    # ⑥ 申請を進めてよいかのルールチェックを行なう（RAGを用いた2次チェック）
     def second_rule_check(self):
         if not self.ocr_results:
             return {"status": "NG", "reason": "証憑データが提出されていません。"}
             
         latest_ocr = self.ocr_results[-1]
-        
-        # 1. RAGから証憑確認ルールを検索
         query = f"{self.application_type} 証憑 金額上限 駅すぱあと"
         retrieved_rules = self.retriever.retrieve_rules(query)
-        
-        # 2. ルール、人事情報、OCR抽出データを突き合わせて判定
         is_ok, reason = self.retriever.evaluate_rule(retrieved_rules, self.hr_data, latest_ocr)
         
         if is_ok:
@@ -161,3 +200,18 @@ class TanshinFuninProcessor:
 
     def complete_application(self):
         return {"status": "完了", "message": "手続きが正常に完了しました。"}
+
+if __name__ == "__main__":
+    processor = TanshinFuninProcessor(user_id="U002")
+    
+    # PDFルールブックを更新(インデックス化)する処理のデモ
+    print("--- 規定PDFの更新（管理者アクション） ---")
+    processor.update_rules("docs/20260401_単身赴任の手引き.pdf")
+    print("---------------------------------------")
+    
+    processor.determine_application_type("往復申請をお願いします")
+    processor.get_hr_info()
+    processor.first_rule_check()
+    processor.determine_required_evidence()
+    processor.process_evidence_ocr("往復証憑", "sample/新幹線チケット.jpg")
+    print(processor.second_rule_check())
